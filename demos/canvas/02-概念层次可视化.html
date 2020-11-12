@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://d3js.org/d3-hierarchy.v2.min.js"></script>
+</head>
+<body>
+   <canvas id="canvas" width="300" height="300"></canvas> 
+   <script>
+       const TAU = Math.PI * 2;
+       
+       (async function() {
+            const canvas = document.querySelector("#canvas")
+            const ctx = canvas.getContext("2d")
+            const source =  await (await fetch("../assets/02-city-data.json")).json();
+
+            const regions = d3.hierarchy(source).sum(d => 1).sort((a, b) => b.value - a.value);
+            const pack = d3.pack().size([300, 300]).padding(3);
+            const root = pack(regions)
+            
+            draw(ctx, root);
+            
+            
+       })()
+
+       function draw(ctx, node ,{fillStyle="rgba(0, 0, 0, 0.2)", textColor="white"} = {}) {
+           const children = node.children
+           const {x, y, r} = node;
+           ctx.fillStyle = fillStyle;
+           ctx.beginPath();
+
+           ctx.arc(x,  y, r, 0, TAU);
+           ctx.fill();
+
+           if(children){
+               for(let child of children) {
+                   draw(ctx, child);
+               }
+           }else{
+               const name = node.data.name;
+               ctx.font = '1.5em Microsoft YaHei';
+               ctx.textAlign = 'center';
+               ctx.fillText(name, x, y);
+           }
+       }
+       
+       
+   </script>
+</body>
+</html>

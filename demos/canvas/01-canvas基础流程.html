@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="canvas" width="300" height="300"></canvas>
+    <script>
+      // 绘制一个正方形
+      const canvas = document.querySelector("#canvas");
+      const ctx = canvas.getContext("2d");
+      const rectSize = [100, 100];
+      ctx.fillStyle = "red"; // 填充颜色指定
+      ctx.save();
+      ctx.beginPath();
+      ctx.translate(-0.5 * rectSize[0], -0.5 * rectSize[1]); // 移动画布
+      ctx.rect(0.5 * canvas.width, 0.5 * canvas.height, ...rectSize); // 描边正方形
+      ctx.fill();  // 填充正方形
+      ctx.restore();
+    </script>
+</body>
+</html>
