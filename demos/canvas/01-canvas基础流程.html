@@ -18,7 +18,7 @@
       ctx.translate(-0.5 * rectSize[0], -0.5 * rectSize[1]); // 移动画布
       ctx.rect(0.5 * canvas.width, 0.5 * canvas.height, ...rectSize); // 描边正方形
       ctx.fill();  // 填充正方形
-      ctx.restore();
+      ctx.restore(); // 移动回画布
     </script>
 </body>
 </html>

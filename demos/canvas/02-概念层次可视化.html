@@ -7,36 +7,54 @@
     <script src="https://d3js.org/d3-hierarchy.v2.min.js"></script>
 </head>
 <body>
-   <canvas id="canvas" width="300" height="300"></canvas> 
+   <canvas id="canvas" width="1000" height="1000"></canvas> 
    <script>
+       const $ = (selector) => document.querySelector(selector)
        const TAU = Math.PI * 2;
        
        (async function() {
-            const canvas = document.querySelector("#canvas")
+            const source = await((await fetch("https://s5.ssl.qhres.com/static/b0695e2dd30daa64.json")).json())
+            const canvas = $('#canvas')
             const ctx = canvas.getContext("2d")
-            const source =  await (await fetch("../assets/02-city-data.json")).json();
-
+            // const source =  await (await fetch("../assets/02-city-data.json")).json();
+            // 数据处理，主要用来将城市按多到少排序
             const regions = d3.hierarchy(source).sum(d => 1).sort((a, b) => b.value - a.value);
-            const pack = d3.pack().size([300, 300]).padding(3);
+            // 初始化一个包装器，在相邻元素添加两个padding
+            const pack = d3.pack().size([1000, 1000]).padding(3);
             const root = pack(regions)
             
             draw(ctx, root);
+            canvas.addEventListener('mousemove', (e) => {
+                const {x, y} = e;
+                ctx.clearRect(0,0,1000,1000);
+                draw(ctx, root, {mouseCtx: {x, y}})
+            })
             
             
        })()
 
-       function draw(ctx, node ,{fillStyle="rgba(0, 0, 0, 0.2)", textColor="white"} = {}) {
+       function draw(ctx, node ,{fillStyle="rgba(0, 0, 0, 0.2)", textColor="white", mouseCtx={x: 0, y: 0}} = {}) {
+        //    console.log(mouseCtx)
            const children = node.children
            const {x, y, r} = node;
-           ctx.fillStyle = fillStyle;
+           if(!children) {
+               
+               const xDistance = x - mouseCtx.x
+               const yDistance = y - mouseCtx.y
+               const distance = Math.sqrt(xDistance ** 2 + yDistance ** 2)
+               if(distance < r) {
+                   ctx.fillStyle = "orange";
+               }
+           } else {
+                ctx.fillStyle = fillStyle;
+           }
            ctx.beginPath();
-
-           ctx.arc(x,  y, r, 0, TAU);
+           ctx.arc(x, y, r, 0, TAU);
            ctx.fill();
-
+           ctx.fillStyle=fillStyle
            if(children){
                for(let child of children) {
-                   draw(ctx, child);
+                   draw(ctx, child, {mouseCtx});
                }
            }else{
                const name = node.data.name;
