@@ -5,21 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <script src="https://d3js.org/d3-hierarchy.v2.min.js"></script>
+    <style>
+        body {
+            position: relative;
+        }
+        #title {
+            top: 0;
+            right: 10px;
+            position: absolute;
+        }
+    </style>
 </head>
 <body style="width: 100%; height: 100%;">
+   <div id="title"></div> 
    <svg xmlns="https://www.w3.org/2000/svg" version="1.1">
         <circle cx="100" cy="50" r="40" stroke="black" stroke-width="2" fill="orange" />
    </svg> 
-   <svg xmlns="https://www.w3.org/2000/svg" version="1.1" id="svg" width="300" height="300"></svg>
+   <svg xmlns="https://www.w3.org/2000/svg" version="1.1" id="svg" width="1000" height="1000"></svg>
    <script>
        
        (async function() {
             const svg = document.querySelector("#svg");
-            const source =  await (await fetch("../assets/02-city-data.json")).json();
-
+            const source =  await (await fetch("https://s5.ssl.qhres.com/static/b0695e2dd30daa64.json")).json();
+            const titleEl = document.querySelector("#title")
             const regions = d3.hierarchy(source).sum(d => 1).sort((a, b) => b.value - a.value);
-            const pack = d3.pack().size([300, 300]).padding(3);
+            const pack = d3.pack().size([1000, 1000]).padding(3);
             const root = pack(regions)
+
+            let activeTarget = null
+            svg.addEventListener('mousemove', (e) => {
+                let target = e.target
+                if(target.nodeName === 'text') target = target.parentNode
+                if(activeTarget !== target) {
+                    if(activeTarget) activeTarget.setAttribute('fill', 'rgba(0, 0, 0, 0.2)')
+                }
+                target.setAttribute('fill', 'rgba(0, 128, 0, 0.1')
+                activeTarget = target
+                titleEl.textContent = getTitle(target)
+            })
             
             draw(svg, root);
        })()
@@ -37,6 +60,7 @@
 
            if(children){
                const group = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+               group.setAttribute('data-name', node.data.name)
                for(let child of children){
                    draw(group, child, {fillStyle, textColor});
                }
@@ -53,6 +77,14 @@
                 text.textContent = name;
                 parent.appendChild(text);
             }
+       }
+
+       function getTitle(target) {
+           const name = target.getAttribute('data-name')
+           if(target.parentNode && target.parentNode.nodeName === 'g') {
+               const parentName = target.parentNode.getAttribute('data-name')
+               return `${parentName}-${name}`
+           }
        }
    </script>
 </body>
