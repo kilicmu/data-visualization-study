@@ -38,6 +38,7 @@ export function createShaderFromScript(gl, type, id) {
 }
 
 
+
 export function createProgram(gl, ...shaders) {
     const program = gl.createProgram()
     shaders.forEach((shader) => {
@@ -71,4 +72,20 @@ export function randomColor() {
     b: random() * 255,
     a: random() * 1
   };
+}
+
+
+export function createBuffer(gl, attribute, vertexAttribPointer) {
+    const {
+        size = 0,
+        type = gl.FLOAT,
+        normalize = false,
+        stride = 0,
+        offset = 0
+    } = vertexAttribPointer
+    gl.enableVertexAttribArray(attribute)
+    const buffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+    gl.vertexAttribPointer(attribute, size, type, normalize, stride, offset)
+    return buffer
 }

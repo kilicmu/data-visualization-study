@@ -76,10 +76,11 @@
         gl.clearColor(0, 0, 0, 1)
 
         canvas.addEventListener('click', e => {
-            const {pageX, pageY} = e;
-            positions.push(pageX, pageY)
+            const {offsetX, offsetY} = e;
+            console.log(e)
+            positions.push(offsetX, offsetY)
             if(positions.length > 0) {
-                gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+                // gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
                 
                 render(gl)

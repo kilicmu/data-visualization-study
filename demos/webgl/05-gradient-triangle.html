@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script type="x-shader/x-vertex" id="vertex-shader">
+        precision mediump float;
+
+        attribute vec2 a_position;
+        attribute vec2 a_screen_size;
+        attribute vec4 a_color;
+        varying vec4 v_color;
+        void main() {
+            vec2 position = ((a_position / a_screen_size) * 2.0) - 1.0;
+            position = position * vec2(1.0, -1.0);
+            gl_Position = vec4(position, 0.0, 1.0);
+            v_color = a_color;
+        }
+    </script>
+    <script type="x-shader/x-fragment" id="fragment-shader">
+        precision mediump float;
+
+        varying vec4 v_color;
+        void main() {
+            vec4 color = v_color / vec4(255, 255, 255, 1);
+            gl_FragColor = color;
+        }
+    </script>
+    <script type="module">
+        import {$, getContext, resizeCanvas, createShaderFromScript, createProgram, createBuffer, randomColor} from "./utils/webgl-helper.js"
+        const canvas = $('#canvas')
+        const positions = []
+        const colors = []
+        resizeCanvas(canvas)
+
+        const gl = getContext(canvas)
+        
+        
+        const vertexShader = createShaderFromScript(gl, gl.VERTEX_SHADER, '#vertex-shader')
+        const fragmentShader = createShaderFromScript(gl, gl.FRAGMENT_SHADER, '#fragment-shader')
+
+        const {program} = createProgram(gl, vertexShader, fragmentShader)
+        gl.useProgram(program)
+
+        
+        const aScreenSize = gl.getAttribLocation(program, 'a_screen_size')
+        gl.vertexAttrib2f(aScreenSize, canvas.width, canvas.height)
+
+        gl.clearColor(0,0,0,1)
+        const aPosition = gl.getAttribLocation(program, 'a_position')
+        const aColor = gl.getAttribLocation(program, 'a_color')
+        /*
+            section 1: use two buffer
+        */
+        const positionBuffer = createBuffer(gl, aPosition, {size: 2})
+        const colorBuffer = createBuffer(gl, aColor, {size: 4})
+
+        canvas.addEventListener('click', e => {
+            const {
+                offsetX: x,
+                offsetY: y
+            } = e
+            positions.push(x, y)
+            const color = randomColor()
+            colors.push(color.r, color.g, color.b, color.a)
+            console.log(positions)
+            if(positions.length % 6 === 0) {
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
+                gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW)
+                render(gl)
+            }
+        })
+
+        function render(gl) {
+            gl.clear(gl.COLOR_BUFFER_BIT)
+            if(positions.length > 0) {
+                gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2)
+            }
+        }
+        render(gl)
+    </script>
+</body>
+</html>
