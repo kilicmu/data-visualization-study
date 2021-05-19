@@ -1,4 +1,7 @@
 export const $ = s => document.querySelector(s)
+
+export const getContext = (canvas) => canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+
 function createShader(gl, type, source) {
     const shader = gl.createShader(type)
     gl.shaderSource(shader, source)
@@ -14,6 +17,8 @@ function createShader(gl, type, source) {
 }
 
 export function resizeCanvas(canvas, width, height) {
+    width = width || window.innerWidth
+    height = height || window.innerHeight
     if(canvas.width !== width) {
         canvas.width = width
     }
@@ -28,8 +33,8 @@ export function resizeCanvas(canvas, width, height) {
  * @param {*} type 着色器类型
  * @param {*} str 源码
  */
-export function createShaderFromScript(gl, type, str) {
-    return createShader(gl, type, str)
+export function createShaderFromScript(gl, type, id) {
+    return createShader(gl, type, $(id).innerHTML)
 }
 
 

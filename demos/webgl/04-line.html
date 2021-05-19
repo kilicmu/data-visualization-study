@@ -5,11 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    
 </head>
 <body>
+    <select>
+        <option value="LINES">lines</option>
+        <option value="LINE_STRIP">line strip</option>
+        <option value="LINE_LOOP">line loop</option>
+    </select>
     <canvas id="canvas"></canvas>
-    <script type="x-shader/x-vertex" id="vertexShader">
+    <script type="x-shader/x-vertex" id="vertex-shader">
         precision mediump float;
 
         attribute vec2 a_Position;
@@ -23,12 +27,12 @@
 			// 最终的顶点坐标。
 			gl_Position = vec4(position, 0.0, 1.0);
 			// 点的大小。
-			gl_PointSize = 1.0;
+			gl_PointSize = 5.0;
         }
     </script>
-    <script type="x-shader/x-fragment" id="fragmentShader">
+    <script type="x-shader/x-fragment" id="fragment-shader">
         precision mediump float;
-        
+
         uniform vec4 u_Color;
 
         void main() {
@@ -37,57 +41,64 @@
         }
     </script>
     <script type="module">
-        import {$, createShaderFromScript, createProgram, resizeCanvas, randomColor, getContext} from "./utils/webgl-helper.js";
+        import {getContext, $, resizeCanvas, createShaderFromScript, createProgram, randomColor} from "./utils/webgl-helper.js"
+        let current = 'LINES'
         const canvas = $("#canvas")
-        resizeCanvas(canvas, window.innerWidth, innerHeight)
+        resizeCanvas(canvas) 
         const gl = getContext(canvas)
-        const positions = []
-        gl.clearColor(0, 0, 0, 1)
-        const vertexShader = createShaderFromScript(gl, gl.VERTEX_SHADER, "#vertexShader")
-        const fragmentShader = createShaderFromScript(gl, gl.FRAGMENT_SHADER, "#fragmentShader")
+        
+        
+        const vertexShader = createShaderFromScript(gl, gl.VERTEX_SHADER, '#vertex-shader')
+        const fragmentShader = createShaderFromScript(gl, gl.FRAGMENT_SHADER, "#fragment-shader") 
         const {program} = createProgram(gl, vertexShader, fragmentShader)
         gl.useProgram(program)
 
+        
         const a_Position = gl.getAttribLocation(program, 'a_Position')
         const a_Screen_Size = gl.getAttribLocation(program, 'a_Screen_Size')
+        gl.vertexAttrib2f(a_Screen_Size, canvas.width, canvas.height)
         const u_Color = gl.getUniformLocation(program, 'u_Color')
+        const color = randomColor()
+        gl.uniform4f(u_Color, color.r, color.g, color.b, color.a)
+
         
-        gl.vertexAttrib2f(a_Screen_Size, canvas.width, canvas.height);
+        let positions = []
+    
         const buffer = gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
-
         gl.enableVertexAttribArray(a_Position)
 
-        const size = 2
-        const type = gl.FLOAT
-        const normalize = false
-        const stride = 0
-        const offset = 0
+        
         gl.vertexAttribPointer(
-            a_Position, size, type, normalize, stride, offset
+            a_Position, 2, gl.FLOAT, false, 0, 0 
         )
 
-        
-        window.addEventListener('click', e => {
-            const {pageX, pageY} = e
+        gl.clearColor(0, 0, 0, 1)
+
+        canvas.addEventListener('click', e => {
+            const {pageX, pageY} = e;
             positions.push(pageX, pageY)
-            if(positions.length % 6 === 0) {
+            if(positions.length > 0) {
+                gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
-                const color = randomColor();
-                gl.uniform4f(u_Color, color.r, color.g, color.b, color.a)
+                
                 render(gl)
-            }
+            } 
         })
+
+        $("select").addEventListener('change', e => {
+            current = e?.target?.value ?? 'LINES';
+            positions = []
+            gl.clear(gl.COLOR_BUFFER_BIT)
+        })
+
         function render(gl) {
             gl.clear(gl.COLOR_BUFFER_BIT)
-            const primitiveType = gl.TRIANGLES;
-            const drawOffset = 0
             if(positions.length > 0) {
-                gl.drawArrays(primitiveType, drawOffset, positions.length / 2)
+                gl.drawArrays(gl[current], 0, positions.length / 2)
             }
-            
         }
-        render(gl);
+        render(gl)
     </script>
 </body>
 </html>
