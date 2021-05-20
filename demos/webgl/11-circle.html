@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script type="x-shader/x-vertex" id="vertex-shader">
+        precision mediump float;
+
+        attribute vec2 a_position;
+        attribute vec2 a_screen_size;
+        attribute vec4 a_color;
+        varying vec4 v_color;
+
+        void main() {
+            vec2 position = (a_position / a_screen_size) * 2.0 - 1.0;
+            position = position * vec2(1.0, -1.0);
+            gl_Position = vec4(position, 0.0, 1.0);
+            v_color = a_color;
+        }
+    </script>
+    <script type="x-shader/x-fragment" id="fragment-shader">
+        precision mediump float;
+
+        varying vec4 v_color;
+        void main() {
+            gl_FragColor = v_color / vec4(255,255,255, 1);
+        }
+    </script>
+    <script type="module">
+        import {$, getContext, resizeCanvas, createShaderFromScript,createBuffer, createProgram} from "./utils/webgl-helper.js";
+
+        const canvas = $("#canvas")
+        resizeCanvas(canvas)
+        const gl = getContext(canvas)
+        gl.clearColor(0, 0, 0, 1)
+        const vertexShader = createShaderFromScript(gl, gl.VERTEX_SHADER, '#vertex-shader')
+        const fragmentShader = createShaderFromScript(gl, gl.FRAGMENT_SHADER, "#fragment-shader")
+        const {program} = createProgram(gl, vertexShader, fragmentShader)
+        gl.useProgram(program)
+
+        // const positions = [
+        //     30, 30, 255, 0, 0, 1,    //V2
+        //     300, 30, 0, 255, 0, 1,    //V3
+        
+        //     300, 300, 255, 0, 0, 1,  //V1
+        //     30, 300, 255, 0, 0, 1,   //V0  
+        // ]
+
+        var positions = generateCirclePositions(200, 200, 100, 1000)
+
+        const a_Screen_Size = gl.getAttribLocation(program, 'a_screen_size')
+        gl.vertexAttrib2f(a_Screen_Size, canvas.width, canvas.height)
+        const a_Position = gl.getAttribLocation(program, 'a_position')
+        const a_Color = gl.getAttribLocation(program, 'a_color')
+
+        const buffer = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+        gl.enableVertexAttribArray(a_Position)
+        gl.enableVertexAttribArray(a_Color)
+    
+        gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 24, 0)
+        gl.vertexAttribPointer(a_Color, 4, gl.FLOAT, false, 24, 8)
+
+        gl.enable(gl.CULL_FACE)
+        gl.cullFace(gl.BACK);
+        function render(gl) {
+            gl.clear(gl.COLOR_BUFFER_BIT)
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
+            gl.drawArrays(gl.TRIANGLE_FAN, 0, positions.length / 6)
+        }
+
+        function generateCirclePositions(x, y, radius, n) {
+            let positions = [x, y, 255, 250, 0, 1]
+            for(let i = 0; i <= n; ++i) {
+                const angle = i * 2 * Math.PI / n;
+                positions.push(
+                    x + radius * Math.sin(angle),
+                    y + radius * Math.cos(angle),
+                    255, 0, 0, 1
+                )
+            }
+            return positions
+        }
+
+        render(gl)
+    </script>
+</body>
+</html>
